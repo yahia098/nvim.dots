@@ -1,0 +1,18 @@
+vim.pack.add({
+	{ src = "https://www.github.com/neovim/nvim-lspconfig" },
+	{ src = "https://www.github.com/saghen/blink.cmp", version = "v1.10.2" },
+	{ src = "https://www.github.com/mason-org/mason.nvim" },
+	{ src = "https://www.github.com/mason-org/mason-lspconfig.nvim" },
+	{ src = "https://github.com/nvim-tree/nvim-web-devicons" },
+	{ src = "https://codeberg.org/mfussenegger/nvim-dap.git" },
+	{ src = "https://github.com/nvim-lualine/lualine.nvim" },
+	{ src = "https://github.com/folke/which-key.nvim" },
+	{ src = "https://github.com/stevearc/oil.nvim" },
+	{ src = "https://github.com/mfussenegger/nvim-lint" },
+	{ src = "https://github.com/windwp/nvim-autopairs" },
+	{ src = "https://github.com/stevearc/conform.nvim" },
+	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
+	{ src = "https://github.com/ray-x/lsp_signature.nvim" },
+	{ src = "https://github.com/folke/tokyonight.nvim" },
+	{ src = "https://github.com/norcalli/nvim-colorizer.lua" },
+})
