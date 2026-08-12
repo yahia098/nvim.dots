@@ -7,3 +7,6 @@ require("completion")
 require("languages")
 require("formatting")
 require("debugger")
+if vim.env.IDF_PATH then
+    require("esp")
+end

@@ -5,68 +5,76 @@ local blink = require("blink.cmp")
 mason.setup()
 
 mason_lspconfig.setup({
-	ensure_installed = {
-		"basedpyright",
-		"lua_ls",
-		"lemminx",
-		"glsl_analyzer",
-	},
+    ensure_installed = {
+        "basedpyright",
+        "lua_ls",
+        "lemminx",
+        "glsl_analyzer",
+    },
 })
 
 local capabilities = blink.get_lsp_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = false
 
 vim.lsp.config("clangd", {
-	capabilities = capabilities,
+    capabilities = capabilities,
 })
 
 vim.lsp.config("basedpyright", {
-	capabilities = capabilities,
-	settings = {
-		basedpyright = {
-			analysis = {
-				autoSearchPaths = true,
-			},
-		},
-	},
+    capabilities = capabilities,
+    settings = {
+        basedpyright = {
+            analysis = {
+                autoSearchPaths = true,
+            },
+        },
+    },
 })
 
 vim.lsp.config("lua_ls", {
-	capabilities = capabilities,
+    capabilities = capabilities,
 })
 
 vim.lsp.config("glsl_analyzer", {
-	capabilities = capabilities,
+    capabilities = capabilities,
 })
 
 vim.lsp.config("lemminx", {
-	capabilities = capabilities,
+    capabilities = capabilities,
 })
 
 vim.lsp.config("json-lsp", {
-	capabilities = capabilities,
+    capabilities = capabilities,
 })
 
+
 vim.lsp.enable({
-	"clangd",
-	"basedpyright",
-	"lua_ls",
-	"glsl_analyzer",
-	"lemminx",
-	"json-lsp",
+    "clangd",
+    "basedpyright",
+    "lua_ls",
+    "glsl_analyzer",
+    "lemminx",
+    "json-lsp",
 })
 
 vim.diagnostic.config({
-	virtual_text = {
-		prefix = "●",
-		spacing = 2,
-	},
-	signs = true,
-	underline = true,
-	update_in_insert = false,
-	severity_sort = true,
-	float = {
-		border = "rounded",
-		source = true,
-	},
+    virtual_text = {
+        prefix = "●",
+        spacing = 2,
+    },
+    signs = true,
+    underline = true,
+    update_in_insert = false,
+    severity_sort = true,
+    float = {
+        border = "rounded",
+        source = true,
+    },
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "arduino",
+    callback = function()
+        require("Arduino-Nvim").setup({})
+    end,
 })
