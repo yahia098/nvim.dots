@@ -1,5 +1,4 @@
 local which_key = require("which-key")
-local colorizer = require("colorizer")
 local lualine = require("lualine")
 local snacks = require("snacks")
 -- Colorscheme
@@ -10,14 +9,13 @@ which_key.setup({})
 
 -- Highlight CSS colors (#RRGGBB, rgb(), rgba(), etc.)
 -- it is a mess so left to defaults
-colorizer.setup()
 
 -- Statusline
 lualine.setup({
-	options = {
-		theme = "tokyonight",
-		globalstatus = true,
-	},
+    options = {
+        theme = "tokyonight",
+        globalstatus = true,
+    },
 })
 
 --snacks stuff

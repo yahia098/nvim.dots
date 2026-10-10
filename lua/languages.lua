@@ -10,7 +10,9 @@ mason_lspconfig.setup({
         "lua_ls",
         "lemminx",
         "glsl_analyzer",
+        "jdtls",
     },
+    automatic_enable = false,
 })
 
 local capabilities = blink.get_lsp_capabilities()
@@ -19,6 +21,11 @@ capabilities.textDocument.completion.completionItem.snippetSupport = false
 vim.lsp.config("clangd", {
     capabilities = capabilities,
 })
+
+vim.lsp.config("jdtls", {
+    capabilities = capabilities,
+}
+)
 
 vim.lsp.config("basedpyright", {
     capabilities = capabilities,
@@ -43,7 +50,7 @@ vim.lsp.config("lemminx", {
     capabilities = capabilities,
 })
 
-vim.lsp.config("json-lsp", {
+vim.lsp.config("jsonls", {
     capabilities = capabilities,
 })
 
@@ -54,7 +61,8 @@ vim.lsp.enable({
     "lua_ls",
     "glsl_analyzer",
     "lemminx",
-    "json-lsp",
+    "jsonls",
+    "jdtls"
 })
 
 vim.diagnostic.config({
