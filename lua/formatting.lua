@@ -19,3 +19,4 @@ conform.setup({
 		lsp_fallback = true,
 	},
 })
+require("nvim-autopairs").setup({})

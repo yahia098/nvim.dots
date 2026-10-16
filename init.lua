@@ -1,6 +1,7 @@
 vim.g.mapleader = " "
 
 require("options")
+require("automatic")
 require("plugins")
 
 require("ui")
@@ -10,10 +11,5 @@ require("completion")
 require("languages")
 require("formatting")
 require("debugger")
-
-if vim.env.IDF_PATH then
-    require("esp")
-end
-
 require("runner")
 require("keymaps")

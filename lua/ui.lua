@@ -1,6 +1,8 @@
 local which_key = require("which-key")
 local lualine = require("lualine")
 local snacks = require("snacks")
+local telescope = require("telescope")
+
 -- Colorscheme
 vim.cmd.colorscheme("tokyonight-storm")
 
@@ -12,38 +14,58 @@ which_key.setup({})
 
 -- Statusline
 lualine.setup({
-    options = {
-        theme = "tokyonight",
-        globalstatus = true,
-    },
+	options = {
+		theme = "tokyonight",
+		globalstatus = true,
+	},
 })
 
 --snacks stuff
 --
 snacks.setup({
-    notifier = {
-        enabled = true,
-        timeout = 3000,
-    },
+	notifier = {
+		enabled = true,
+		timeout = 3000,
+	},
 
-    picker = {
-        enabled = true,
-    },
+	picker = {
+		enabled = true,
+	},
 
-    explorer = {
-        enabled = true,
-    },
+	explorer = {
+		enabled = false,
+	},
 
-    terminal = {
-        enabled = true,
-    },
+	terminal = {
+		enabled = true,
+	},
 
-    styles = {
-        esp32_terminal = {
-            width = 0.9,
-            height = 0.5,
-            border = "rounded",
-            position = "bottom",
-        },
-    },
+	styles = {
+		esp32_terminal = {
+			width = 0.9,
+			height = 0.5,
+			border = "rounded",
+			position = "bottom",
+		},
+	},
 })
+
+require("gitsigns").setup({
+	current_line_blame = false,
+	signcolumn = true,
+	numhl = false,
+	word_diff = false,
+})
+
+telescope.setup({
+	extensions = {
+		fzf = {
+			fuzzy = true,
+			override_generic_sorter = true,
+			override_file_sorter = true,
+			case_mode = "smart_case",
+		},
+	},
+})
+
+telescope.load_extension("fzf")
