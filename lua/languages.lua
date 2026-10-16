@@ -3,13 +3,6 @@ local mason_lspconfig = require("mason-lspconfig")
 local blink = require("blink.cmp")
 
 mason.setup()
-require("mason-tool-installer").setup({
-	ensure_installed = {
-		"java-debug-adapter",
-	},
-	auto_update = false,
-	run_on_start = true,
-})
 mason_lspconfig.setup({
 	ensure_installed = {
 		"basedpyright",

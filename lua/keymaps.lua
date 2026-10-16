@@ -1,9 +1,6 @@
-local dap = require("dap")
-local dapui = require("dapui")
-local runner = require("code_runner")
 local map = vim.keymap.set
 local builtin = require("telescope.builtin")
-
+local cmake = require("cmake-tools")
 -- General
 map("n", "<leader>w", "<cmd>w<CR>", {
 	desc = "Save",
@@ -32,83 +29,29 @@ map("n", "<leader>fe", "<CMD>Oil<CR>", {
 })
 
 -- Telescope
-map("n", "<leader>ff", builtin.find_files, {
-	desc = "Find files",
-})
-map("n", "<leader>fg", builtin.live_grep, {
-	desc = "Search text",
-})
 map("n", "<leader>fb", builtin.buffers, {
 	desc = "Find buffers",
 })
 map("n", "<leader>fh", builtin.help_tags, {
 	desc = "Search help",
 })
-
--- Debug: execution
-map("n", "<F5>", dap.continue, {
-	desc = "Debug: Start / Continue",
-})
-map("n", "<S-F5>", dap.terminate, {
-	desc = "Debug: Terminate",
-})
-map("n", "<F10>", dap.step_over, {
-	desc = "Debug: Step Over",
-})
-map("n", "<F11>", dap.step_into, {
-	desc = "Debug: Step Into",
-})
-map("n", "<F12>", dap.step_out, {
-	desc = "Debug: Step Out",
-})
-map("n", "<leader>dp", dap.pause, {
-	desc = "Debug: Pause",
-})
-map("n", "<leader>dl", dap.run_last, {
-	desc = "Debug: Run Last Configuration",
-})
-
--- Debug: breakpoints
-map("n", "<leader>b", dap.toggle_breakpoint, {
-	desc = "Debug: Toggle Breakpoint",
-})
-map("n", "<leader>B", function()
-	local condition = vim.fn.input("Breakpoint condition: ")
-	if condition ~= "" then
-		dap.set_breakpoint(condition)
-	end
+-- Telescope
+map("n", "<leader>ff", function()
+	builtin.find_files({
+		cwd = vim.uv.cwd(),
+		hidden = true,
+	})
 end, {
-	desc = "Debug: Conditional Breakpoint",
-})
-map("n", "<leader>dc", dap.clear_breakpoints, {
-	desc = "Debug: Clear All Breakpoints",
+	desc = "Find files (cwd)",
 })
 
--- Debug: inspection
-map("n", "<leader>du", dapui.toggle, {
-	desc = "Debug: Toggle UI",
-})
-map("n", "<leader>dr", dap.repl.open, {
-	desc = "Debug: Open REPL",
-})
-map({ "n", "v" }, "<leader>de", function()
-	dapui.eval()
+map("n", "<leader>fg", function()
+	builtin.live_grep({
+		cwd = vim.uv.cwd(),
+		additional_args = { "--hidden" },
+	})
 end, {
-	desc = "Debug: Evaluate Expression",
-})
-
--- Code Runner
-map("n", "<leader>r", runner.run_code, {
-	desc = "Run: Execute Code",
-})
-map("n", "<leader>R", runner.run_filetype, {
-	desc = "Run: Current File",
-})
-map("n", "<leader>P", runner.run_project, {
-	desc = "Run: Current Project",
-})
-map("n", "<leader>X", runner.run_close, {
-	desc = "Run: Close Runner",
+	desc = "Search text (cwd)",
 })
 
 -- Git: Gitsigns
@@ -134,3 +77,57 @@ map("n", "<leader>hp", gitsigns.preview_hunk, { desc = "Git: Preview hunk" })
 map("n", "<leader>hs", gitsigns.stage_hunk, { desc = "Git: Stage hunk" })
 map("n", "<leader>hr", gitsigns.reset_hunk, { desc = "Git: Reset hunk" })
 map("n", "<leader>hb", gitsigns.blame_line, { desc = "Git: Blame line" })
+-- CMake
+
+map("n", "<leader>cg", cmake.generate, {
+	desc = "CMake: Generate",
+})
+
+map("n", "<leader>cb", cmake.build, {
+	desc = "CMake: Build",
+})
+
+map("n", "<leader>cc", cmake.clean, {
+	desc = "CMake: Clean",
+})
+
+map("n", "<leader>cr", cmake.run, {
+	desc = "CMake: Run",
+})
+
+map("n", "<leader>cd", cmake.select_build_type, {
+	desc = "CMake: Select Build Type",
+})
+
+map("n", "<leader>ct", cmake.select_build_target, {
+	desc = "CMake: Select Build Target",
+})
+
+map("n", "<leader>cl", cmake.select_launch_target, {
+	desc = "CMake: Select Launch Target",
+})
+
+-- Buffers
+map("n", "<leader>bn", "<Cmd>BufferNext<CR>", {
+	desc = "Buffer: Next",
+})
+
+map("n", "<leader>bp", "<Cmd>BufferPrevious<CR>", {
+	desc = "Buffer: Previous",
+})
+
+map("n", "<leader>bc", "<Cmd>BufferClose<CR>", {
+	desc = "Buffer: Close",
+})
+
+map("n", "<leader>bo", "<Cmd>BufferCloseAllButCurrent<CR>", {
+	desc = "Buffer: Close Others",
+})
+
+map("n", "<leader>br", "<Cmd>BufferRestore<CR>", {
+	desc = "Buffer: Restore Closed",
+})
+
+map("n", "<leader>bt", "<Cmd>BufferPick<CR>", {
+	desc = "Buffer: Pick",
+})

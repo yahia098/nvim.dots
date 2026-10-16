@@ -2,6 +2,7 @@ local which_key = require("which-key")
 local lualine = require("lualine")
 local snacks = require("snacks")
 local telescope = require("telescope")
+local barbar = require("barbar")
 
 -- Colorscheme
 vim.cmd.colorscheme("tokyonight-storm")
@@ -69,3 +70,21 @@ telescope.setup({
 })
 
 telescope.load_extension("fzf")
+
+barbar.setup({
+	animation = true,
+	auto_hide = false,
+	clickable = true,
+	icons = {
+		filetype = {
+			enabled = true,
+		},
+		button = "×",
+		diagnostics = {
+			[vim.diagnostic.severity.ERROR] = {
+				enabled = true,
+				icon = "●",
+			},
+		},
+	},
+})
