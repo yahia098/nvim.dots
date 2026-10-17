@@ -1,52 +1,65 @@
 # Neovim Configuration
 
-My personal Neovim configuration for development, written in Lua and organized into modules. It uses Neovim's built-in package manager, `vim.pack`, and focuses on keeping the setup modular, maintainable, and practical.
+My personal Neovim configuration for development, written in Lua and organized into modules. It uses Neovim's built-in package manager, `vim.pack`, and aims to stay modular, maintainable, and practical.
 
 ## Features
 
 - **Plugin management:** Native `vim.pack`
 - **Completion:** `blink.cmp` with LSP, snippets, paths, and buffer sources
 - **Language servers:** clangd, BasedPyright, LuaLS, GLSL Analyzer, Lemminx, JSON-LSP, and JDTLS
-- **Debugging:** `nvim-dap` and `nvim-dap-ui`
-- **Code execution:** `code_runner`
+- **Build systems:** CMake Tools integration for configuring, building, cleaning, and running CMake targets
+- **Terminal:** Snacks terminal for running shell commands, compilers, and executables manually
 - **File navigation:** Oil
 - **Fuzzy finding:** Telescope with `fzf-native`
-- **Git integration:** Gitsigns and Lazygit
-- **Formatting:** Stylua, Black, and Prettierd
-- **Linting:** Cppcheck, ShellCheck, Ruff, and Selene
-- **Interface:** Lualine, nvim-web-devicons, and which-key
-- **Embedded development:** ESP-IDF integration for ESP32 projects
+- **Git integration:** Gitsigns for hunk navigation, previewing, staging, resetting, and blame
+- **Formatting:** Conform with tools such as clang-format, Black, and Stylua; Prettierd is optional if configured for relevant filetypes
+- **Linting:** `nvim-lint` with Cppcheck, ShellCheck, Ruff, Selene, and Clippy
+- **Interface:** Lualine, nvim-web-devicons, which-key, TokyoNight, and Barbar for buffer tabs
+- **Embedded development:** ESP-IDF integration for ESP32 projects, with ESP32 and Arduino-related plugins
+- **Java support:** JDTLS through `nvim-jdtls`
 
-The exact functionality available depends on the installed plugins, language servers, and external tools.
+The exact functionality available depends on the installed plugins, language servers, external tools, and project configuration. This setup does not use `code_runner` or the `nvim-dap` / `nvim-dap-ui` debugging plugins. Code is run manually from the terminal, while CMake Tools handles CMake projects.
 
 ## Requirements
 
-- Neovim with `vim.pack` support
+- A Neovim version that supports the `vim.pack` workflow used by this configuration
 - Git
-- A C/C++ compiler and debugger for native development
-- Node.js and npm for relevant language tooling
+- A C/C++ compiler for native development
+- CMake and a build tool such as Ninja for CMake projects
 - Python for Python development
+- Node.js and npm for language tooling that requires them
 - A Nerd Font is recommended if you use icon-based UI components
 
 ### Arch Linux dependencies
 
-Install the common system packages with:
+Install the common packages used by this configuration with:
 
 ```bash
-sudo pacman -Syu --needed git gcc clang gdb cmake ninja cppcheck shellcheck ruff selene nodejs npm python python-black python-debugpy rustup stylua lazygit fzf imagemagick
+sudo pacman -S --needed git gcc clang cmake ninja make gdb cppcheck shellcheck ruff selene nodejs npm python python-black rustup stylua fzf lazygit
 ```
 
-Some tools may be installed through Mason or another package manager instead. Package availability can vary by repository and architecture.
+This is a starting point, not a requirement to install every package. Remove packages for features you do not use. `gdb` is optional if you only need to compile and run programs and do not debug them manually. `lazygit` is an optional standalone Git terminal UI; it is not a Neovim plugin in the current plugin list.
+
+For Rust linting, make sure the stable toolchain and Clippy component are installed when using `rustup`:
+
+```bash
+rustup toolchain install stable
+rustup default stable
+rustup component add clippy
+```
+
+Some language servers and tools can also be installed through Mason. Avoid maintaining duplicate installations unless you intentionally want to manage them separately.
 
 ### Optional dependencies
 
-Install these only if you use the corresponding features:
+Install these only when you use the corresponding features:
 
-- **Java:** A JDK and JDTLS, plus `java-debug-adapter` for Java debugging.
-- **Rust-based plugin builds:** Rust and Cargo i put rustup on my pc and use stable , if required by your installed plugin versions.
-- **Web formatting:** Prettierd (forgot why i added it).
-- **Additional language servers:** BasedPyright, GLSL Analyzer, Lemminx, JSON-LSP, and other servers configured in `languages`.lua file.
-- **ESP32 development:** ESP-IDF from the aur, its toolchain, and the appropriate environment variables.
+- **Web formatting:** Prettierd, if it is configured in `formatting.lua` for the filetypes you use.
+- **Additional language servers:** BasedPyright, GLSL Analyzer, Lemminx, JSON-LSP, and other servers configured in `languages.lua`.
+- **Java:** A compatible JDK and JDTLS.
+- **ESP32 development:** ESP-IDF, its toolchain, and the appropriate environment variables. The ESP-IDF installation method and package availability depend on your system.
+- **Manual debugging:** GDB or the relevant language debugger, if you want to debug outside of a Neovim DAP integration.
+- **Image features:** ImageMagick, only if you enable features that need it.
 
 ## Installation
 
@@ -68,7 +81,7 @@ Start Neovim:
 nvim
 ```
 
-Install or synchronize plugins using the package-management workflow supported by your configuration and Neovim version. Then check the installation:
+The configuration uses `vim.pack` to manage plugins. Allow the configured plugin-installation workflow to finish, then inspect the setup with:
 
 ```vim
 :checkhealth
@@ -103,14 +116,13 @@ If you use Mason, open its interface with:
     ├── languages.lua
     ├── formatting.lua
     ├── linting.lua
-    ├── debugger.lua
     ├── miscellaneous.lua
     └── esp.lua
 ```
 
-Each Lua module is responsible for a specific part of the configuration. `init.lua` loads the modules, while `plugins.lua` manages plugin installation.
+Each Lua module is responsible for a specific part of the configuration. `init.lua` loads the modules, while `plugins.lua` declares plugins through `vim.pack`.
 
-The `esp.lua` module is intended for ESP-IDF development and can be loaded conditionally when `IDF_PATH` is set.
+The `esp.lua` module is intended for ESP-IDF development and can be loaded conditionally when `IDF_PATH` is set. Keep this tree synchronized with the files that actually exist in the repository.
 
 ## Keymaps
 
@@ -118,91 +130,103 @@ The following mappings are defined in `keymaps.lua`. The leader key depends on y
 
 ### General
 
-| Key         | Action                    |
-| ----------- | ------------------------- |
-| `<leader>w` | Save the current file     |
-| `<leader>q` | Quit                      |
-| `<Esc>`     | Clear search highlighting |
+| Key | Action |
+| --- | --- |
+| `<leader>w` | Save the current file |
+| `<leader>q` | Quit |
+| `<Esc>` | Clear search highlighting |
 
 ### Clipboard
 
-| Key     | Action                             |
-| ------- | ---------------------------------- |
-| `y`     | Yank to the system clipboard       |
-| `Y`     | Yank lines to the system clipboard |
-| `<A-y>` | Cut to the system clipboard        |
+| Key | Action |
+| --- | --- |
+| `y` | Yank to the system clipboard |
+| `Y` | Yank lines to the system clipboard |
+| `<A-y>` | Cut to the system clipboard |
 
-### File Navigation
+### File Navigation and Search
 
-| Key          | Action                    |
-| ------------ | ------------------------- |
-| `<leader>fe` | Open Oil                  |
-| `<leader>ff` | Find files with Telescope |
-| `<leader>fg` | Search file contents      |
-| `<leader>fb` | Find open buffers         |
-| `<leader>fh` | Search Neovim help        |
+| Key | Action |
+| --- | --- |
+| `<leader>fe` | Open Oil |
+| `<leader>ff` | Find files with Telescope, including hidden files |
+| `<leader>fg` | Search file contents with Telescope, including hidden files |
+| `<leader>fb` | Find open buffers |
+| `<leader>fh` | Search Neovim help tags |
 
-### Debugging
+### Terminal and Build
 
-| Key          | Action                           |
-| ------------ | -------------------------------- |
-| `<F5>`       | Start or continue debugging      |
-| `<S-F5>`     | Terminate debugging              |
-| `<F10>`      | Step over                        |
-| `<F11>`      | Step into                        |
-| `<F12>`      | Step out                         |
-| `<leader>dp` | Pause execution                  |
-| `<leader>dl` | Run the last debug configuration |
-| `<leader>b`  | Toggle breakpoint                |
-| `<leader>B`  | Set a conditional breakpoint     |
-| `<leader>dc` | Clear all breakpoints            |
-| `<leader>du` | Toggle the DAP UI                |
-| `<leader>dr` | Open the DAP REPL                |
-| `<leader>de` | Evaluate an expression           |
+| Key | Action |
+| --- | --- |
+| `<leader>tt` | Toggle the Snacks terminal |
+| `<leader>cg` | Generate the CMake build system |
+| `<leader>cb` | Build the CMake project |
+| `<leader>cc` | Clean the CMake build |
+| `<leader>cr` | Run the selected CMake launch target |
+| `<leader>cd` | Select the CMake build type |
+| `<leader>ct` | Select the CMake build target |
+| `<leader>cl` | Select the CMake launch target |
 
-Debugging requires a compatible adapter and debugger for the language being used.
-
-### Code Runner
-
-| Key         | Action                  |
-| ----------- | ----------------------- |
-| `<leader>r` | Execute code            |
-| `<leader>R` | Run the current file    |
-| `<leader>P` | Run the current project |
-| `<leader>X` | Close the runner        |
+The Snacks terminal is a terminal manager, not an automatic code runner. Use it to run commands yourself. For example, run a Python project with `uv run -- python -u main.py`; compile standalone C/C++ programs with the compiler; and use CMake Tools for projects with a `CMakeLists.txt` file.
 
 ### Git
 
-| Key          | Action                            |
-| ------------ | --------------------------------- |
-| `]c`         | Navigate to the next Git hunk     |
-| `[c`         | Navigate to the previous Git hunk |
-| `<leader>hp` | Preview a hunk                    |
-| `<leader>hs` | Stage a hunk                      |
-| `<leader>hr` | Reset a hunk                      |
-| `<leader>hb` | Blame the current line            |
+| Key | Action |
+| --- | --- |
+| `]c` | Navigate to the next Git hunk, unless in diff mode |
+| `[c` | Navigate to the previous Git hunk, unless in diff mode |
+| `<leader>hp` | Preview a hunk |
+| `<leader>hs` | Stage a hunk |
+| `<leader>hr` | Reset a hunk |
+| `<leader>hb` | Blame the current line |
+
+### Buffers
+
+| Key | Action |
+| --- | --- |
+| `<leader>bn` | Next buffer |
+| `<leader>bp` | Previous buffer |
+| `<leader>bc` | Close the current buffer |
+| `<leader>bo` | Close all buffers except the current one |
+| `<leader>br` | Restore a closed buffer |
+| `<leader>bt` | Pick a buffer |
 
 ## Language Support
 
 Language support is configured in `languages.lua`. Servers and tools must be installed separately unless the configuration installs them automatically.
 
-- **C/C++:** clangd, GCC or Clang, and GDB or another configured debug adapter.
-- **Python:** BasedPyright, Python, and debugpy if Python debugging is enabled.
-- **Lua:** LuaLS and Stylua.
+- **C/C++:** clangd, GCC or Clang, CMake Tools, and Cppcheck.
+- **Python:** BasedPyright, Python, and Ruff; use `uv` for projects managed with it.
+- **Lua:** LuaLS, Stylua, and Selene.
+- **Shell:** ShellCheck for supported shell filetypes.
 - **GLSL:** GLSL Analyzer.
 - **XML:** Lemminx.
 - **JSON:** JSON-LSP.
 - **Java:** JDTLS and a compatible Java Development Kit.
+- **Rust:** A stable Rust toolchain and Clippy for Cargo projects.
+- **ESP32:** ESP-IDF and its toolchain, with `IDF_PATH` set for the conditional integration.
 
-For C/C++ projects, a `compile_commands.json` compilation database is recommended. It allows clangd to understand the project's include paths, compiler flags, and build configuration. CMake projects can usually generate one with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`.
+For C/C++ projects, `compile_commands.json` is recommended because it lets clangd read the project's include paths, compiler flags, and build configuration. CMake projects can usually generate it with:
 
-## Debugging Notes
+```bash
+cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
 
-- **C/C++:** Build the program with debug symbols and configure the DAP adapter to use the resulting executable.
-- **Python:** Install debugpy and ensure the configured adapter can locate it.
-- **Java:** Configure JDTLS and the Java debug adapter. Java debugging is separate from language-server functionality.
+CMake Tools provides keymaps for generation, building, cleaning, and running targets. A valid `CMakeLists.txt` must exist in the project source directory.
 
-DAP keymaps alone do not configure a working debugger. Each language needs a valid adapter and launch configuration.
+## Formatting and Linting
+
+Formatting is handled by `conform.nvim`; linting is handled by `nvim-lint`. They serve different purposes: formatters rewrite code into a consistent style, while linters report potential problems.
+
+The current `nvim-lint` configuration runs the selected linter on `BufWritePost` (after saving):
+
+- C/C++: `cppcheck`
+- Shell: `shellcheck`
+- Python: `ruff`
+- Lua: `selene`
+- Rust: `clippy` (requires a Cargo project)
+
+These executable tools must be installed and visible in Neovim's `PATH`. LSP diagnostics can run alongside these linters; they are complementary, not replacements for Blink completion.
 
 ## Troubleshooting
 
@@ -212,10 +236,10 @@ Run the built-in health checks:
 :checkhealth
 ```
 
-Inspect active language servers:
+Inspect active language servers with the command supported by your installed LSP setup, or open the LSP health report:
 
 ```vim
-:LspInfo
+:checkhealth vim.lsp
 ```
 
 Inspect the LSP log if a server fails to start:
@@ -224,11 +248,11 @@ Inspect the LSP log if a server fails to start:
 :lua vim.cmd.edit(vim.lsp.log.get_filename())
 ```
 
-If a plugin fails to load, verify that it is installed, its dependencies are available, and its setup function runs before any keymaps or modules that depend on it.
+If a plugin fails to load, verify that it is declared in `plugins.lua`, installed, and that its setup runs before any modules or keymaps that depend on it. For external tools, check them from a shell with `command -v <tool>` and verify that Neovim can see them through its `PATH`.
 
-## &#x20;Note
+## Note
 
-this is a WIP
+This configuration is a work in progress.
 
 ## License
 
