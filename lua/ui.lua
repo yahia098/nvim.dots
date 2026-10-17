@@ -38,7 +38,11 @@ snacks.setup({
 	},
 
 	terminal = {
-		enabled = true,
+		win = {
+			style = "terminal",
+			position = "bottom",
+			height = 0.45,
+		},
 	},
 
 	styles = {

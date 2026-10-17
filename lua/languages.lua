@@ -16,7 +16,6 @@ mason_lspconfig.setup({
 })
 
 local capabilities = blink.get_lsp_capabilities()
-capabilities.textDocument.completion.completionItem.snippetSupport = false
 
 vim.lsp.config("clangd", {
 	capabilities = capabilities,
@@ -101,7 +100,6 @@ vim.api.nvim_create_autocmd("FileType", {
 		end
 
 		local java_capabilities = blink.get_lsp_capabilities()
-		java_capabilities.textDocument.completion.completionItem.snippetSupport = false
 
 		local config = {
 			cmd = {

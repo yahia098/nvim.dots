@@ -1,6 +1,7 @@
 local map = vim.keymap.set
 local builtin = require("telescope.builtin")
 local cmake = require("cmake-tools")
+local snacks = require("snacks")
 -- General
 map("n", "<leader>w", "<cmd>w<CR>", {
 	desc = "Save",
@@ -131,3 +132,7 @@ map("n", "<leader>br", "<Cmd>BufferRestore<CR>", {
 map("n", "<leader>bt", "<Cmd>BufferPick<CR>", {
 	desc = "Buffer: Pick",
 })
+-- Terminal Snacks
+map("n", "<leader>tt", function()
+	snacks.terminal()
+end, { desc = "Toggle terminal" })

@@ -19,13 +19,6 @@ lint.linters_by_ft = {
 	rust = { "clippy" },
 }
 
-vim.api.nvim_create_autocmd("BufWritePost", {
-	group = group,
-	callback = function()
-		lint.try_lint()
-	end,
-})
-
 local group = vim.api.nvim_create_augroup("UserLinting", {
 	clear = true,
 })
