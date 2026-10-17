@@ -3,6 +3,7 @@
 My personal Neovim configuration for development, written in Lua and organized into modules. It uses Neovim's built-in package manager, `vim.pack`, and aims to stay modular, maintainable, and practical.
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/969b9df7-7424-47b1-ae51-912f31f43371" />
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/ff3feaf3-8233-4a07-95ca-dd41d2ae8d6b" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/dcecf56c-147d-4121-a472-98b49079d332" />
 
 ## Features
 
