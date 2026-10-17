@@ -227,7 +227,7 @@ The current `nvim-lint` configuration runs the selected linter on `BufWritePost`
 - Shell: `shellcheck`
 - Python: `ruff`
 - Lua: `selene`
-- Rust: `clippy` (requires a Cargo project)
+- Rust: `clippy` (requires a Cargo project or just use mason just like me)
 
 These executable tools must be installed and visible in Neovim's `PATH`. LSP diagnostics can run alongside these linters; they are complementary, not replacements for Blink completion.
 
