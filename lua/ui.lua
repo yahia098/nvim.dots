@@ -5,8 +5,10 @@ local telescope = require("telescope")
 local barbar = require("barbar")
 
 -- Colorscheme
-vim.cmd.colorscheme("tokyonight-storm")
-
+require("matugen").setup({
+	colors_path = "~/.config/matugen/templates/colors-nvim.json",
+})
+vim.cmd.colorscheme("matugen")
 -- Keymap hints i need this to save me
 which_key.setup({})
 
@@ -16,7 +18,6 @@ which_key.setup({})
 -- Statusline
 lualine.setup({
 	options = {
-		theme = "tokyonight",
 		globalstatus = true,
 	},
 })
@@ -40,8 +41,10 @@ snacks.setup({
 	terminal = {
 		win = {
 			style = "terminal",
-			position = "bottom",
-			height = 0.45,
+			position = "float",
+			width = 0.85,
+			height = 0.75,
+			border = "single",
 		},
 	},
 

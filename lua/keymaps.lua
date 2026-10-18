@@ -133,6 +133,6 @@ map("n", "<leader>bt", "<Cmd>BufferPick<CR>", {
 	desc = "Buffer: Pick",
 })
 -- Terminal Snacks
-map("n", "<leader>tt", function()
+map("n", "<leader>t", function()
 	snacks.terminal()
 end, { desc = "Toggle terminal" })
