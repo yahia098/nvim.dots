@@ -11,6 +11,7 @@ mason_lspconfig.setup({
 		"glsl_analyzer",
 		"jdtls",
 		"jsonls",
+		"cssls",
 	},
 	automatic_enable = false,
 })
@@ -162,3 +163,7 @@ vim.api.nvim_create_autocmd("FileType", {
 if vim.env.IDF_PATH then
 	require("esp")
 end
+
+vim.lsp.config("cssls", {
+	capabilities = capabilities,
+})
