@@ -35,6 +35,25 @@ vim.lsp.config("basedpyright", {
 
 vim.lsp.config("lua_ls", {
 	capabilities = capabilities,
+	settings = {
+		Lua = {
+			runtime = {
+				version = "LuaJIT",
+			},
+			diagnostics = {
+				globals = { "vim" },
+			},
+			workspace = {
+				library = {
+					vim.env.VIMRUNTIME,
+				},
+				checkThirdParty = false,
+			},
+			telemetry = {
+				enable = false,
+			},
+		},
+	},
 })
 
 vim.lsp.config("glsl_analyzer", {
@@ -49,6 +68,26 @@ vim.lsp.config("jsonls", {
 	capabilities = capabilities,
 })
 
+vim.lsp.config("cssls", {
+	settings = {
+		css = {
+			lint = {
+				unknownAtRules = "ignore",
+			},
+		},
+		scss = {
+			lint = {
+				unknownAtRules = "ignore",
+			},
+		},
+		less = {
+			lint = {
+				unknownAtRules = "ignore",
+			},
+		},
+	},
+})
+
 vim.lsp.enable({
 	"clangd",
 	"basedpyright",
@@ -56,6 +95,7 @@ vim.lsp.enable({
 	"glsl_analyzer",
 	"lemminx",
 	"jsonls",
+	"cssls",
 })
 
 -- Java: nvim-jdtls
@@ -163,7 +203,3 @@ vim.api.nvim_create_autocmd("FileType", {
 if vim.env.IDF_PATH then
 	require("esp")
 end
-
-vim.lsp.config("cssls", {
-	capabilities = capabilities,
-})

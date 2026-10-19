@@ -3,7 +3,7 @@ local lualine = require("lualine")
 local snacks = require("snacks")
 local telescope = require("telescope")
 local barbar = require("barbar")
-
+local colorer = require("colorizer")
 -- Colorscheme
 require("matugen").setup({
 	colors_path = "~/.config/matugen/templates/colors-nvim.json",
@@ -29,7 +29,6 @@ snacks.setup({
 		enabled = true,
 		timeout = 3000,
 	},
-
 	picker = {
 		enabled = true,
 	},
@@ -47,7 +46,6 @@ snacks.setup({
 			border = "single",
 		},
 	},
-
 	styles = {
 		esp32_terminal = {
 			width = 0.9,
@@ -55,6 +53,12 @@ snacks.setup({
 			border = "rounded",
 			position = "bottom",
 		},
+	},
+	dashboard = {
+		enabled = true,
+		width = 72,
+		preset = require("dashboard").preset,
+		sections = require("dashboard").sections,
 	},
 })
 
@@ -93,5 +97,21 @@ barbar.setup({
 				icon = "●",
 			},
 		},
+	},
+})
+
+colorer.setup({
+	user_default_options = {
+		names = false,
+		RGB = true,
+		RGBA = true,
+		RRGGBB = true,
+		RRGGBBAA = true,
+		AARRGGBB = true,
+		rgb_fn = true,
+		hsl_fn = true,
+		css = true,
+		css_fn = true,
+		mode = "background",
 	},
 })
