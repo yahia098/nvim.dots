@@ -136,3 +136,13 @@ map("n", "<leader>bt", "<Cmd>BufferPick<CR>", {
 map("n", "<leader>t", function()
 	snacks.terminal()
 end, { desc = "Toggle terminal" })
+
+map("n", "<leader>rr", "<cmd>RunProject<CR>", {
+	desc = "Run project",
+	silent = true,
+})
+
+map("n", "<leader>rf", "<cmd>RunFile<CR>", {
+	desc = "Run current file",
+	silent = true,
+})
