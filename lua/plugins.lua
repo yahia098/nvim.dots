@@ -1,5 +1,6 @@
 vim.pack.add({
 	{ src = "https://github.com/neovim/nvim-lspconfig" },
+	{ src = "https://github.com/stevearc/overseer.nvim" },
 	{ src = "https://github.com/rafamadriz/friendly-snippets" },
 	{ src = "https://github.com/saghen/blink.lib" },
 	{ src = "https://github.com/romgrk/barbar.nvim" },
