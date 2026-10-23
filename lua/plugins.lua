@@ -1,13 +1,11 @@
 vim.pack.add({
 	{ src = "https://github.com/neovim/nvim-lspconfig" },
-	{ src = "https://github.com/stevearc/overseer.nvim" },
 	{ src = "https://github.com/rafamadriz/friendly-snippets" },
 	{ src = "https://github.com/saghen/blink.lib" },
 	{ src = "https://github.com/romgrk/barbar.nvim" },
 	{ src = "https://github.com/NvChad/nvim-colorizer.lua" },
 	{ src = "https://github.com/saghen/blink.cmp" },
 	{ src = "https://github.com/mason-org/mason.nvim" },
-	{ src = "https://github.com/Civitasv/cmake-tools.nvim" },
 	{ src = "https://github.com/CRAG666/code_runner.nvim" },
 	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
 	{ src = "https://github.com/daedlock/matugen.nvim" },

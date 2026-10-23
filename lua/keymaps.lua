@@ -1,11 +1,10 @@
 -- lua/keymaps.lua
 --
--- All keymaps live here. runner.lua must be loaded first so the
--- Code Runner and CMake Tools configurations already exist.
+-- All keymaps live here. runner.lua must be loaded first so the Code Runner
+-- configuration already exists.
 
 local map = vim.keymap.set
 local builtin = require("telescope.builtin")
-local cmake = require("cmake-tools")
 local snacks = require("snacks")
 
 -- Helper: find a file by searching upward from the current buffer.
@@ -16,6 +15,87 @@ local function find_upward(names)
 		upward = true,
 		type = "file",
 	})[1]
+end
+
+-- Run a CMake project using scripts/cmake_targets.sh rather than cmake-tools.
+-- The script configures the project's build/ directory, discovers executable
+-- targets through CMake's File API, and builds/runs the selected target.
+local function run_cmake_project()
+	local cmake_file = find_upward({ "CMakeLists.txt" })
+	if not cmake_file then
+		return false
+	end
+
+	local root = vim.fs.dirname(cmake_file)
+	local build_dir = vim.fs.joinpath(root, "build")
+	local script = vim.fs.joinpath(vim.fn.stdpath("config"), "scripts", "cmake_targets.sh")
+
+	if vim.fn.filereadable(script) == 0 then
+		vim.notify("CMake target script not found: " .. script, vim.log.levels.ERROR)
+		return true
+	end
+
+	-- The script prints one executable target name per line. systemlist uses
+	-- an argv list, so project paths containing spaces are passed safely.
+	local targets = vim.fn.systemlist({ "bash", script, "list", root, build_dir })
+	local status = vim.v.shell_error
+
+	if status ~= 0 then
+		local details = table.concat(targets, "\n")
+		vim.notify("CMake target discovery failed" .. (details ~= "" and ":\n" .. details or "."), vim.log.levels.ERROR)
+		return true
+	end
+
+	if #targets == 0 then
+		vim.notify("No executable CMake targets found", vim.log.levels.WARN)
+		return true
+	end
+
+	vim.ui.select(targets, {
+		prompt = "Run CMake target",
+		format_item = function(target)
+			return target
+		end,
+	}, function(target)
+		if not target then
+			return
+		end
+
+		local command = table.concat({
+			"bash",
+			vim.fn.shellescape(script),
+			"run",
+			vim.fn.shellescape(root),
+			vim.fn.shellescape(build_dir),
+			vim.fn.shellescape(target),
+		}, " ")
+
+		require("code_runner").run_from_fn(command)
+	end)
+
+	return true
+end
+
+-- Build or clean the nearest CMake project using CMake's CLI.
+local function run_cmake_action(action)
+	local cmake_file = find_upward({ "CMakeLists.txt" })
+	if not cmake_file then
+		vim.notify("No CMakeLists.txt found in this directory or its parents", vim.log.levels.WARN)
+		return
+	end
+
+	local root = vim.fs.dirname(cmake_file)
+	local build_dir = vim.fs.joinpath(root, "build")
+	local configure = ("cmake -S %s -B %s"):format(vim.fn.shellescape(root), vim.fn.shellescape(build_dir))
+	local build
+
+	if action == "clean" then
+		build = ("cmake --build %s --target clean"):format(vim.fn.shellescape(build_dir))
+	else
+		build = ("cmake --build %s"):format(vim.fn.shellescape(build_dir))
+	end
+
+	require("code_runner").run_from_fn(configure .. " && " .. build)
 end
 
 -- Helper: run a fixed target (e.g. `run`, `clean`) from the nearest
@@ -36,6 +116,22 @@ local function run_make_target(target)
 	local command = ("make -C %s -- %s"):format(vim.fn.shellescape(root), vim.fn.shellescape(target))
 
 	require("code_runner").run_from_fn(command)
+end
+
+-- Clean whichever build system belongs to the current project.
+-- CMake projects take priority if both marker files are present.
+local function clean_project()
+	if find_upward({ "CMakeLists.txt" }) then
+		run_cmake_action("clean")
+		return
+	end
+
+	if find_upward({ "GNUmakefile", "Makefile", "makefile" }) then
+		run_make_target("clean")
+		return
+	end
+
+	vim.notify("No CMakeLists.txt or Makefile found in this directory or its parents", vim.log.levels.WARN)
 end
 
 -- General
@@ -135,43 +231,12 @@ map("n", "<leader>hb", gitsigns.blame_line, {
 	desc = "Git: Blame line",
 })
 
--- CMake
--- cmake-tools handles configuration, build targets, and launching.
-
-map("n", "<leader>cg", cmake.generate, {
-	desc = "CMake: Generate",
-})
-
-map("n", "<leader>cb", cmake.build, {
-	desc = "CMake: Build",
-})
-
-map("n", "<leader>cc", cmake.clean, {
-	desc = "CMake: Clean",
-})
-
-map("n", "<leader>cr", cmake.run, {
-	desc = "CMake: Run",
-})
-
-map("n", "<leader>cd", cmake.select_build_type, {
-	desc = "CMake: Select Build Type",
-})
-
-map("n", "<leader>ct", cmake.select_build_target, {
-	desc = "CMake: Select Build Target",
-})
-
-map("n", "<leader>cl", cmake.select_launch_target, {
-	desc = "CMake: Select Launch Target",
-})
-
 -- Runner
 --
 -- <leader>rr: Run the project.
--- For CMake projects, run the selected CMake launch target.
+-- For CMake projects, select an executable target using cmake_targets.sh.
 -- For Python files, run from the uv project root if there is one,
--- otherwise run the file itself.
+-- otherwise run the file itself with the filetype command.
 -- For Makefile projects, run `make run` from the Makefile's directory.
 -- For other projects, let Code Runner use root_markers.
 --
@@ -179,9 +244,8 @@ map("n", "<leader>cl", cmake.select_launch_target, {
 -- This intentionally bypasses project-level detection.
 
 map("n", "<leader>rr", function()
-	-- CMake projects: run the selected launch target.
-	if find_upward("CMakeLists.txt") then
-		cmake.run()
+	-- CMake projects: discover executable targets and run the selected one.
+	if run_cmake_project() then
 		return
 	end
 
@@ -361,27 +425,33 @@ local function select_make_target()
 	end)
 end
 
--- Register the group so Which-Key labels these mappings as Make.
+-- Consolidate project actions under <leader>r instead of a separate <leader>m group.
+-- <leader>rr already runs `make run` for Makefile projects, so no separate
+-- mapping is needed for the old <leader>mr action.
 require("which-key").add({
-	{ "<leader>m", group = "Make" },
+	{ "<leader>r", group = "Run / Project" },
 })
 
-map("n", "<leader>mt", select_make_target, {
-	desc = "Make: Select target",
+map("n", "<leader>rt", function()
+	-- In CMake projects, choose and run an executable target.
+	if run_cmake_project() then
+		return
+	end
+
+	-- In Make projects, select a Make target and execute it.
+	if find_upward({ "GNUmakefile", "Makefile", "makefile" }) then
+		select_make_target()
+		return
+	end
+
+	vim.notify("No CMakeLists.txt or Makefile found in this directory or its parents", vim.log.levels.WARN)
+end, {
+	desc = "Run: Select project target",
 	silent = true,
 })
 
-map("n", "<leader>mr", function()
-	run_make_target("run")
-end, {
-	desc = "Make: run",
-	silent = true,
-})
-
-map("n", "<leader>mc", function()
-	run_make_target("clean")
-end, {
-	desc = "Make: clean",
+map("n", "<leader>rc", clean_project, {
+	desc = "Run: Clean project",
 	silent = true,
 })
 
