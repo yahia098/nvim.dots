@@ -132,7 +132,7 @@ The `Mason` command opens Mason's package UI. It does not guarantee that every n
 - `languages.lua` configures language servers, diagnostics, Java, and Arduino integration; it conditionally loads `esp.lua` when `IDF_PATH` is set.
 - `formatting.lua` configures Conform and format-on-save.
 - `linting.lua` configures `nvim-lint` to lint after saving.
-- `runner.lua` configures Code Runner for file/project execution and configures CMake Tools.
+- `runner.lua` configures Code Runner for file/project execution.
 - `keymaps.lua` contains general, navigation, Git, CMake, runner, Make, buffer, and terminal mappings.
 - `explorer.lua` configures Oil.
 - `ui.lua` configures the theme, statusline, Which-Key, Snacks, Telescope, Gitsigns, Barbar, and colorizer.

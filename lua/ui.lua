@@ -80,7 +80,8 @@ telescope.setup({
 	},
 })
 
-telescope.load_extension("fzf")
+-- pcall: the native library may not be built yet (first launch or failed build).
+pcall(telescope.load_extension, "fzf")
 
 barbar.setup({
 	animation = true,

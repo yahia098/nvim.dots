@@ -16,6 +16,21 @@ mason_lspconfig.setup({
 	automatic_enable = false,
 })
 
+-- External tools used by conform.nvim, nvim-lint and clangd.
+-- (clippy comes from rustup: `rustup component add clippy`)
+require("mason-tool-installer").setup({
+	ensure_installed = {
+		"clangd",
+		"clang-format",
+		"stylua",
+		"black",
+		"prettierd",
+		"shellcheck",
+		"ruff",
+		"selene",
+	},
+})
+
 local capabilities = blink.get_lsp_capabilities()
 
 vim.lsp.config("clangd", {
@@ -69,6 +84,7 @@ vim.lsp.config("jsonls", {
 })
 
 vim.lsp.config("cssls", {
+	capabilities = capabilities,
 	settings = {
 		css = {
 			lint = {
@@ -136,7 +152,11 @@ vim.api.nvim_create_autocmd("FileType", {
 		local debug_path = packages .. "/java-debug-adapter"
 		local bundles = vim.fn.glob(debug_path .. "/extension/server/com.microsoft.java.debug.plugin-*.jar", true, true)
 
-		if #bundles == 0 then
+		-- Debugging needs nvim-dap, which isn't in plugins.lua. Only set up DAP (and
+		-- nag about the debug adapter) when nvim-dap is actually installed.
+		local has_dap = pcall(require, "dap")
+
+		if has_dap and #bundles == 0 then
 			vim.notify("Java debug adapter not found. Install java-debug-adapter through :Mason.", vim.log.levels.WARN)
 		end
 
@@ -164,7 +184,7 @@ vim.api.nvim_create_autocmd("FileType", {
 				bundles = bundles,
 			},
 			on_attach = function()
-				if #bundles > 0 then
+				if has_dap and #bundles > 0 then
 					jdtls.setup_dap({
 						hotcodereplace = "auto",
 					})

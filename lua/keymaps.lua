@@ -18,6 +18,26 @@ local function find_upward(names)
 	})[1]
 end
 
+-- Helper: run a fixed target (e.g. `run`, `clean`) from the nearest
+-- Makefile's directory, so relative paths like shaders/ keep working.
+local function run_make_target(target)
+	local makefile = find_upward({
+		"GNUmakefile",
+		"Makefile",
+		"makefile",
+	})
+
+	if not makefile then
+		vim.notify("No Makefile found in this directory or its parents", vim.log.levels.WARN)
+		return
+	end
+
+	local root = vim.fs.dirname(makefile)
+	local command = ("make -C %s -- %s"):format(vim.fn.shellescape(root), vim.fn.shellescape(target))
+
+	require("code_runner").run_from_fn(command)
+end
+
 -- General
 map("n", "<leader>w", "<cmd>w<CR>", {
 	desc = "Save",
@@ -150,17 +170,47 @@ map("n", "<leader>cl", cmake.select_launch_target, {
 --
 -- <leader>rr: Run the project.
 -- For CMake projects, run the selected CMake launch target.
+-- For Python files, run from the uv project root if there is one,
+-- otherwise run the file itself.
+-- For Makefile projects, run `make run` from the Makefile's directory.
 -- For other projects, let Code Runner use root_markers.
 --
 -- <leader>rf: Run the current file using its filetype command.
 -- This intentionally bypasses project-level detection.
 
 map("n", "<leader>rr", function()
+	-- CMake projects: run the selected launch target.
 	if find_upward("CMakeLists.txt") then
 		cmake.run()
-	else
-		vim.cmd("RunProject")
+		return
 	end
+
+	-- Python: uv project -> run from the project root; otherwise run the file
+	-- itself with the filetype command.
+	if vim.bo.filetype == "python" then
+		local uv_marker = find_upward({ "uv.lock", "pyproject.toml" })
+
+		if uv_marker then
+			local root = vim.fs.dirname(uv_marker)
+			local file = vim.fn.expand("%:p")
+
+			require("code_runner").run_from_fn(
+				("cd %s && uv run -- python -u %s"):format(vim.fn.shellescape(root), vim.fn.shellescape(file))
+			)
+		else
+			vim.cmd("RunFile")
+		end
+		return
+	end
+
+	-- Makefile projects: `make run` from the Makefile's directory.
+	if find_upward({ "GNUmakefile", "Makefile", "makefile" }) then
+		run_make_target("run")
+		return
+	end
+
+	-- Everything else: Code Runner's root_markers.
+	vim.cmd("RunProject")
 end, {
 	desc = "Run project",
 	silent = true,
@@ -318,6 +368,20 @@ require("which-key").add({
 
 map("n", "<leader>mt", select_make_target, {
 	desc = "Make: Select target",
+	silent = true,
+})
+
+map("n", "<leader>mr", function()
+	run_make_target("run")
+end, {
+	desc = "Make: run",
+	silent = true,
+})
+
+map("n", "<leader>mc", function()
+	run_make_target("clean")
+end, {
+	desc = "Make: clean",
 	silent = true,
 })
 

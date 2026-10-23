@@ -6,6 +6,11 @@ vim.api.nvim_create_autocmd("PackChanged", {
 			return
 		end
 
+		-- Don't try to build when the plugin is being deleted.
+		if ev.data.kind ~= "install" and ev.data.kind ~= "update" then
+			return
+		end
+
 		local path = ev.data.path
 
 		local commands = {
