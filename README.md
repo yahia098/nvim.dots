@@ -63,7 +63,7 @@ The UI loads the Matugen colorscheme from:
 ~/.config/matugen/templates/colors-nvim.json
 ```
 
-Make sure your Matugen setup generates that file, or change the path in `lua/ui.lua`. If the file is missing, the config falls back to tokyonight. If you don't know how to set Matugen up, check out [my Hyprland rice repo](https://github.com/yahia098/hypr-dots).
+Make sure your Matugen setup generates that file, or change the path in `lua/ui.lua`. If the file is missing, the config falls back to tokyonight. If you don't know how to set Matugen up, check out [my Hyprland rice repo](https://github.com/yahia098/hypr-dotfiles).
 
 ## Installation
 
