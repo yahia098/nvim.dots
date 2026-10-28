@@ -55,6 +55,7 @@ require("lazy").setup({
 	install = { missing = true },
 	checker = { enabled = false },
 	change_detection = { notify = false },
+  concurrency = 4,
 	rocks = { enabled = false },
 	performance = {
 		rtp = {
