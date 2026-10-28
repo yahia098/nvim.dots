@@ -5,10 +5,17 @@ local telescope = require("telescope")
 local barbar = require("barbar")
 local colorer = require("colorizer")
 -- Colorscheme
-require("matugen").setup({
-	colors_path = "~/.config/matugen/templates/colors-nvim.json",
-})
-vim.cmd.colorscheme("matugen")
+-- Falls back to tokyonight if matugen or its colors file isn't available yet
+-- (for example on a fresh install).
+local matugen_ok = pcall(function()
+	require("matugen").setup({
+		colors_path = "~/.config/matugen/templates/colors-nvim.json",
+	})
+	vim.cmd.colorscheme("matugen")
+end)
+if not matugen_ok then
+	pcall(vim.cmd.colorscheme, "tokyonight")
+end
 -- Keymap hints i need this to save me
 which_key.setup({})
 
@@ -25,6 +32,8 @@ lualine.setup({
 --snacks stuff
 --
 snacks.setup({
+	-- Big files: switch off syntax, folds and LSP overhead automatically.
+	bigfile = { enabled = true },
 	notifier = {
 		enabled = true,
 		timeout = 3000,
@@ -56,7 +65,7 @@ snacks.setup({
 	},
 	dashboard = {
 		enabled = true,
-		width = 72,
+		width = math.min(72, vim.o.columns - 4),
 		preset = require("dashboard").preset,
 		sections = require("dashboard").sections,
 	},
@@ -70,6 +79,30 @@ require("gitsigns").setup({
 })
 
 telescope.setup({
+	defaults = {
+		-- Big repos: keep build output, dependencies and VCS data out of results.
+		file_ignore_patterns = {
+			"^%.git/",
+			"node_modules/",
+			"^build/",
+			"^target/",
+			"^dist/",
+			"%.o$",
+			"%.a$",
+			"%.so$",
+			"%.class$",
+			"%.pyc$",
+			"__pycache__/",
+			"%.lock$",
+		},
+		path_display = { "truncate" },
+		sorting_strategy = "ascending",
+		layout_config = { prompt_position = "top" },
+		cache_picker = { num_pickers = 10, limit_entries = 1000 },
+	},
+	pickers = {
+		find_files = { hidden = true },
+	},
 	extensions = {
 		fzf = {
 			fuzzy = true,
@@ -84,7 +117,7 @@ telescope.setup({
 pcall(telescope.load_extension, "fzf")
 
 barbar.setup({
-	animation = true,
+	animation = false,
 	auto_hide = false,
 	clickable = true,
 	icons = {

@@ -1,6 +1,6 @@
 local mason = require("mason")
 local mason_lspconfig = require("mason-lspconfig")
-local blink = require("blink.cmp")
+local blink_plugin = require("blink.cmp")
 
 mason.setup()
 mason_lspconfig.setup({
@@ -31,7 +31,7 @@ require("mason-tool-installer").setup({
 	},
 })
 
-local capabilities = blink.get_lsp_capabilities()
+local capabilities = blink_plugin.get_lsp_capabilities()
 
 vim.lsp.config("clangd", {
 	capabilities = capabilities,
@@ -104,7 +104,7 @@ vim.lsp.config("cssls", {
 	},
 })
 
-vim.lsp.enable({
+local servers = {
 	"clangd",
 	"basedpyright",
 	"lua_ls",
@@ -112,7 +112,9 @@ vim.lsp.enable({
 	"lemminx",
 	"jsonls",
 	"cssls",
-})
+}
+
+vim.lsp.enable(servers)
 
 -- Java: nvim-jdtls
 vim.api.nvim_create_autocmd("FileType", {
@@ -138,8 +140,12 @@ vim.api.nvim_create_autocmd("FileType", {
 		local packages = vim.fn.stdpath("data") .. "/mason/packages"
 		local jdtls_cmd = packages .. "/jdtls/bin/jdtls"
 
+		if vim.fn.executable(jdtls_cmd) ~= 1 and vim.fn.executable("jdtls") == 1 then
+			jdtls_cmd = "jdtls" -- system-wide install
+		end
+
 		if vim.fn.executable(jdtls_cmd) ~= 1 then
-			vim.notify("Mason JDTLS executable not found: " .. jdtls_cmd, vim.log.levels.ERROR)
+			vim.notify("JDTLS executable not found: " .. jdtls_cmd, vim.log.levels.ERROR)
 			return
 		end
 
@@ -160,7 +166,7 @@ vim.api.nvim_create_autocmd("FileType", {
 			vim.notify("Java debug adapter not found. Install java-debug-adapter through :Mason.", vim.log.levels.WARN)
 		end
 
-		local java_capabilities = blink.get_lsp_capabilities()
+		local java_capabilities = blink_plugin.get_lsp_capabilities()
 
 		local config = {
 			cmd = {
@@ -195,6 +201,64 @@ vim.api.nvim_create_autocmd("FileType", {
 		}
 
 		jdtls.start_or_attach(config)
+	end,
+})
+
+-- LSP keymaps and symbol highlighting
+-- Buffer-local, set only when a server attaches.
+local map = vim.keymap.set
+local lsp_group = vim.api.nvim_create_augroup("UserLspKeymaps", { clear = true })
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = lsp_group,
+	callback = function(ev)
+		local function lmap(mode, lhs, rhs, desc)
+			map(mode, lhs, rhs, { buffer = ev.buf, desc = desc })
+		end
+
+		lmap("n", "gd", vim.lsp.buf.definition, "LSP: Go to definition")
+		lmap("n", "gD", vim.lsp.buf.declaration, "LSP: Go to declaration")
+		lmap("n", "gy", vim.lsp.buf.type_definition, "LSP: Go to type definition")
+		lmap("n", "<leader>ls", vim.lsp.buf.signature_help, "LSP: Signature help")
+		lmap("n", "<leader>lr", vim.lsp.buf.rename, "LSP: Rename")
+		lmap({ "n", "x" }, "<leader>la", vim.lsp.buf.code_action, "LSP: Code action")
+		lmap({ "n", "x" }, "<leader>lf", function()
+			vim.lsp.buf.format({ async = true })
+		end, "LSP: Format")
+		lmap("n", "<leader>lR", vim.lsp.buf.references, "LSP: References")
+		lmap("n", "<leader>li", vim.lsp.buf.implementation, "LSP: Implementation")
+
+		lmap("n", "<leader>lc", vim.lsp.buf.incoming_calls, "LSP: Incoming calls")
+		lmap("n", "<leader>lC", vim.lsp.buf.outgoing_calls, "LSP: Outgoing calls")
+		lmap("n", "<C-LeftMouse>", "<LeftMouse><cmd>lua vim.lsp.buf.definition()<CR>", "LSP: Go to definition")
+
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+
+		-- Fold by the language server's own structure (functions, blocks, ...).
+		if client and client:supports_method("textDocument/foldingRange") then
+			local win = vim.api.nvim_get_current_win()
+			vim.wo[win][0].foldmethod = "expr"
+			vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+		end
+		if client and client:supports_method("textDocument/inlayHint") then
+			lmap("n", "<leader>lh", function()
+				vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }), { bufnr = ev.buf })
+			end, "LSP: Toggle inlay hints")
+		end
+
+		-- Highlight other uses of the symbol under the cursor while idle.
+		if client and client:supports_method("textDocument/documentHighlight") then
+			local hl = vim.api.nvim_create_augroup("UserLspHighlight" .. ev.buf, { clear = true })
+			vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+				group = hl,
+				buffer = ev.buf,
+				callback = vim.lsp.buf.document_highlight,
+			})
+			vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+				group = hl,
+				buffer = ev.buf,
+				callback = vim.lsp.buf.clear_references,
+			})
+		end
 	end,
 })
 

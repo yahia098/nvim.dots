@@ -6,13 +6,20 @@ if not blink.library_available() then
 end
 
 blink.setup({
+	-- Arrow keys are left alone (they just move the cursor).
+	-- Tab / Shift-Tab walk through the menu, Enter accepts the selected item.
 	keymap = {
-		preset = "default",
-		["<Tab>"] = {
-			"accept",
-			"snippet_forward",
-			"fallback",
-		},
+		preset = "none",
+		["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
+		["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+		["<CR>"] = { "accept", "fallback" },
+		["<C-n>"] = { "select_next", "fallback" },
+		["<C-p>"] = { "select_prev", "fallback" },
+		["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
+		["<C-e>"] = { "hide", "fallback" },
+		["<C-b>"] = { "scroll_documentation_up", "fallback" },
+		["<C-f>"] = { "scroll_documentation_down", "fallback" },
+		["<C-k>"] = { "show_signature", "hide_signature", "fallback" },
 	},
 
 	completion = {

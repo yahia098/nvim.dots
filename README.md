@@ -10,27 +10,26 @@ My personal Neovim configuration for development, written in Lua and managed wit
 
 ## Features
 
-- **Plugin management:** Neovim's built-in `vim.pack`, with `nvim-pack-lock.json` tracking plugin versions.
-- **Completion:** `blink.cmp`, with LSP, path, snippet, and buffer sources; documentation and signature help.
+- **Plugin management:** Neovim's built-in `vim.pack`. Every download happens first at startup (`plugins.lua`, no confirmation prompt), and each remaining module loads in protected mode so one failure cannot stop the rest.
+- **Completion:** `blink.cmp` with LSP, path, snippet, and buffer sources. `Tab` / `Shift-Tab` walk the menu, `Enter` accepts, and arrow keys are left alone.
 - **Language servers:** `clangd`, BasedPyright, LuaLS, GLSL Analyzer, Lemminx, JSON-LSP, CSS-LS, and JDTLS.
-- **Formatting:** `conform.nvim`, with format-on-save for configured filetypes.
-- **Linting:** `nvim-lint`, configured to run Cppcheck, ShellCheck, Ruff, Selene, and Clippy after saving.
-- **C/C++ development:** CMake Tools, standalone C/C++ execution, and dynamic Makefile target selection.
-- **Project execution:** Code Runner for files and supported project markers; CMake Tools handles CMake launch targets.
-- **Python:** UV-aware execution for Python files and projects.
-- **Rust:** standalone `rustc` execution and Cargo project execution.
-- **Navigation:** Oil file explorer and Telescope with `fzf-native`.
-- **Git:** Gitsigns for hunk navigation, preview, stage, reset, and blame.
-- **Interface:** Matugen colorscheme, Lualine, Which-Key, Barbar buffer tabs, Snacks dashboard/terminal/notifier, and color highlighting.
-- **Embedded development:** conditional ESP-IDF integration when `IDF_PATH` is set, plus Arduino-related tooling.
-- **Editing:** persistent undo, automatic pairs, snippets, and system-clipboard keymaps.
+- **Formatting and linting:** `conform.nvim` (format on save) and `nvim-lint` (after saving; linters that are not installed are skipped).
+- **Building and running:** Code Runner for files and projects, plus CMake, Make, Cargo, Maven, Gradle, and UV project actions under `<leader>r`.
+- **Navigating large codebases:** project-root-aware Telescope pickers, Git pickers, jump/mark/quickfix pickers, LSP folding, call hierarchy, numbered buffer jumps, and automatic handling of very large files.
+- **Search and refactor:** grug-far for project-wide search and replace, Trouble for diagnostics, references, and symbols lists.
+- **Git:** Gitsigns for hunks, plus Telescope Git pickers.
+- **Interface:** Matugen colorscheme (falls back to tokyonight), Lualine, Which-Key, Barbar buffer tabs, Snacks dashboard/terminal/notifier, and color highlighting.
+- **Neovide:** font, animations, zoom, fullscreen, and paste, all enabled only inside Neovide.
+- **Embedded development:** conditional ESP-IDF integration when `IDF_PATH` is set, plus Arduino tooling.
+- **Editing:** persistent undo, automatic pairs, snippets, 2-space indentation (real tabs in Makefiles), and clipboard-safe deleting and pasting.
 
 Feature availability depends on the tools installed on the system, the plugins finishing installation, and the build configuration of each project.
 
 ## Requirements
 
-- A recent Neovim build with native `vim.pack` support.
+- Neovim 0.12 or newer (native `vim.pack`).
 - Git.
+- ripgrep (`rg`) for grug-far and faster `:grep`.
 - A C/C++ compiler (GCC or Clang).
 - CMake and GNU Make; Ninja is useful for projects configured to use it.
 - UV and Python for UV-managed Python projects.
@@ -57,7 +56,7 @@ rustup default stable
 rustup component add clippy
 ```
 
-CMake Tools needs a working CMake project and a suitable generator/build tool. `telescope-fzf-native.nvim` is a native extension; `automatic.lua` attempts to build it when its `PackChanged` event fires, so CMake and a C/C++ toolchain are needed for that build.
+`telescope-fzf-native.nvim` is a native extension; `automatic.lua` attempts to build it when its `PackChanged` event fires, so CMake and a C/C++ toolchain are needed for that build.
 
 ### Local Matugen theme
 
@@ -105,10 +104,10 @@ The `Mason` command opens Mason's package UI. It does not guarantee that every n
 .
 ├── init.lua
 ├── README.md
-├── nvim-pack-lock.json
+├── scripts/
+│   └── cmake_targets.sh
 └── lua/
     ├── automatic.lua
-    ├── cmake.lua
     ├── completion.lua
     ├── dashboard.lua
     ├── esp.lua
@@ -120,23 +119,25 @@ The `Mason` command opens Mason's package UI. It does not guarantee that every n
     ├── options.lua
     ├── plugins.lua
     ├── runner.lua
+    ├── tools.lua
     └── ui.lua
 ```
 
-- `init.lua` sets the leader and loads the configuration modules in order.
-- `options.lua` defines editor behavior, indentation, search, windows, and persistent undo.
-- `automatic.lua` builds `telescope-fzf-native.nvim` after the relevant package change event.
+- `init.lua` sets the leader, enables the Lua module cache, loads `options`, `automatic` and `plugins` first, then loads the other modules in protected mode.
+- `options.lua` defines editor behavior, indentation, search, folds, persistent undo, and the Neovide settings.
+- `automatic.lua` builds `telescope-fzf-native.nvim` after install, sets Makefile and C/C++ indentation, and holds the general autocommands (yank flash, restore cursor, auto-reload, create missing folders on save, close helper windows with `q`).
 - `plugins.lua` declares plugins through `vim.pack`.
-- `cmake.lua` configures CMake Tools and `compile_commands.json` handling.
 - `completion.lua` configures Blink completion/signature help and automatic pairs.
-- `languages.lua` configures language servers, diagnostics, Java, and Arduino integration; it conditionally loads `esp.lua` when `IDF_PATH` is set.
+- `languages.lua` configures language servers, LSP keymaps, diagnostics, Java, and Arduino integration; it conditionally loads `esp.lua` when `IDF_PATH` is set.
 - `formatting.lua` configures Conform and format-on-save.
-- `linting.lua` configures `nvim-lint` to lint after saving.
+- `linting.lua` configures `nvim-lint`.
 - `runner.lua` configures Code Runner for file/project execution.
-- `keymaps.lua` contains general, navigation, Git, CMake, runner, Make, buffer, and terminal mappings.
+- `tools.lua` configures Trouble and grug-far.
+- `keymaps.lua` contains the general, navigation, Git, runner, buffer, terminal, and Neovide mappings.
 - `explorer.lua` configures Oil.
 - `ui.lua` configures the theme, statusline, Which-Key, Snacks, Telescope, Gitsigns, Barbar, and colorizer.
 - `dashboard.lua` defines the Snacks dashboard sections and the `:SessionSave` command.
+- `scripts/cmake_targets.sh` lists CMake executable targets through CMake's File API.
 
 ## Running Code and Building Projects
 
@@ -144,15 +145,15 @@ The `Mason` command opens Mason's package UI. It does not guarantee that every n
 
 | Key | Action |
 | --- | --- |
-| `<leader>rr` | Run the project; routes CMake projects through CMake Tools |
+| `<leader>rr` | Run the project |
 | `<leader>rf` | Run the current file using its filetype command |
-| `<leader>mt` | Find a Makefile above the current file and select one of its targets |
+| `<leader>rt` | Select a target: CMake executable targets, otherwise Make targets |
+| `<leader>rb` | Build the nearest project with its native build tool |
+| `<leader>rc` | Clean the nearest project |
 
-`<leader>rr` checks for a `CMakeLists.txt` above the current buffer. If found, it runs the selected CMake launch target; otherwise it calls Code Runner's project command. `<leader>rf` intentionally uses the filetype command and does not perform project-level detection.
+CMake projects use a `build/` directory and `scripts/cmake_targets.sh`, which discovers executable targets through CMake's File API. Other projects (Maven, Gradle, Cargo, Go, npm, UV, Makefiles) are detected from their marker files.
 
 ### Supported Code Runner commands
-
-The current `runner.lua` configuration includes:
 
 - **C:** compile the current file with GCC using warnings and debug information, then run the executable.
 - **C++:** compile the current file with G++ and C++17, then run the executable.
@@ -160,85 +161,142 @@ The current `runner.lua` configuration includes:
 - **Java:** compile and run the current Java file.
 - **Rust:** compile standalone Rust files with `rustc`; a project with `Cargo.toml` uses `cargo run` instead.
 - **Shell:** run through Bash.
-- **Project markers:** Maven, Gradle, Cargo, Go, npm, UV (`uv.lock` / `pyproject.toml`), and Makefiles.
 
-Standalone C/C++ commands compile only the current source file. For multi-file programs or projects requiring library linking, use the project's build system instead.
-
-### CMake shortcuts
-
-| Key | Action |
-| --- | --- |
-| `<leader>cg` | Generate/configure the CMake build system |
-| `<leader>cb` | Build the CMake project |
-| `<leader>cc` | Clean the CMake build |
-| `<leader>cr` | Run the selected CMake launch target |
-| `<leader>cd` | Select the CMake build type |
-| `<leader>ct` | Select the CMake build target |
-| `<leader>cl` | Select the CMake launch target |
-
-CMake Tools uses a `build/` directory and enables `CMAKE_EXPORT_COMPILE_COMMANDS` for clangd and other tooling. A project must provide a valid `CMakeLists.txt`; select an executable launch target before trying to run it.
+Standalone C/C++ commands compile only the current source file. For multi-file programs, use the project's build system.
 
 ### Make target picker
 
-`<leader>mt` searches upward from the current file for `GNUmakefile`, `Makefile`, or `makefile`. It invokes GNU Make in query/database mode (`make -qp`) and presents discovered targets using Neovim's `vim.ui.select()`. The selected target is then executed with `make -C` from the directory containing the Makefile. This means a source file in `project/src/` can use a Makefile in `project/` without hardcoding `..`.
-
-Make target discovery is best-effort: Makefiles can use advanced syntax or generated targets that are difficult to parse completely. `make -qp` parses the Makefile and can evaluate `$(shell ...)` expressions, so only use it with Makefiles you trust.
+`<leader>rt` searches upward from the current file for `GNUmakefile`, `Makefile`, or `makefile` when no CMake project is found. It uses GNU Make's query/database mode (`make -qp`) and shows the discovered targets with `vim.ui.select()`; the chosen target runs with `make -C` from the Makefile's directory. Target discovery is best-effort, and `make -qp` can evaluate `$(shell ...)`, so only use it with Makefiles you trust.
 
 ## Keymaps
 
-The leader key is a space (` `).
+The leader key is a space. Press `<leader>` and wait for Which-Key to show the available groups.
 
-### General and clipboard
+### General, clipboard and editing
 
 | Key | Action |
 | --- | --- |
-| `<leader>w` | Save the current file |
+| `<leader>w` | Save |
+| `<leader>W` | Save all |
+| `<C-s>` | Save (any mode) |
 | `<leader>q` | Quit |
 | `<Esc>` | Clear search highlighting |
-| `y` | Yank to the system clipboard |
-| `Y` | Yank lines to the system clipboard |
+| `y / Y` | Yank (lines) to the system clipboard |
 | `<A-y>` | Cut to the system clipboard |
+| `d, D, c, C, x, X` | Delete or change without touching any register |
+| `p / P` | Paste the system clipboard |
+| `<A-j> / <A-k>` | Move the line or selection down / up |
+| `< / > (visual)` | Indent and keep the selection |
+| `j / k` | Move by screen line on wrapped lines (counts still work) |
+| `<C-d> / <C-u>, n / N` | Scroll and search with the cursor centered |
+| `J` | Join lines without moving the cursor |
+| `<leader>a` | Select the whole file |
+| `* (visual)` | Search for the selected text |
+| `<leader>sr` | Replace the word under the cursor in the file |
+| `<leader>cx` | Make the current file executable |
 
-### File navigation and search
+### Windows and buffers
+
+| Key | Action |
+| --- | --- |
+| `<C-h/j/k/l>` | Move between windows (also from a terminal) |
+| `<C-arrows>` | Resize the window |
+| `<leader>sv / sh` | Split vertically / horizontally |
+| `<leader>se / sx` | Equalize / close splits |
+| `<leader>z` | Maximize the window |
+| `<leader><Tab>` | Next window |
+| `<leader><leader>` | Alternate file |
+| `<A-,> / <A-.>` | Previous / next buffer |
+| `<A-<> / <A->>` | Move the buffer left / right |
+| `<A-1> ... <A-9>, <A-0>` | Go to buffer 1-9 / the last buffer |
+| `<A-c> / <A-p>` | Close / pin the buffer |
+| `<leader>bn bp bc bo br bt` | Next, previous, close, close others, restore, pick |
+| `Mouse back / forward` | Jump back / forward in the jumplist |
+
+### Files, search and projects
 
 | Key | Action |
 | --- | --- |
 | `<leader>fe` | Open Oil |
 | `<leader>.` | Toggle hidden files in Oil |
-| `<leader>ff` | Find files with Telescope, including hidden files |
-| `<leader>fg` | Search file contents with Telescope, including hidden files |
-| `<leader>fb` | Find open buffers |
-| `<leader>fh` | Search Neovim help tags |
+| `<leader>ff / fg` | Find files / grep (cwd) |
+| `<leader>fp / fP` | Find files / grep from the project root |
+| `<leader>f. / f,` | Find files / grep in the current file folder |
+| `<leader>fO` | Grep in open buffers |
+| `<leader>fb / fh` | Buffers / help tags |
+| `<leader>fr` | Recent files |
+| `<leader>fw` | Search the word under the cursor |
+| `<leader>fz or <leader>/` | Search in the current buffer |
+| `<leader>fd` | Diagnostics |
+| `<leader>fs / fS` | Symbols in the file / project |
+| `<leader>fk` | Keymaps |
+| `<leader>fj / fm / fq` | Jumplist / marks / quickfix |
+| `<leader>fR` | Resume the last picker |
+| `<leader>cr or :Root` | cd to the project root |
+| `<leader>cd` | cd to the current file folder |
+| `<leader>sg` | Search and replace in the project (selection in visual mode) |
+| `<leader>sw` | Search and replace the word under the cursor |
+| `<leader>sf` | Search and replace in this file |
 
 ### Git
 
 | Key | Action |
 | --- | --- |
-| `]c` | Next Git hunk, unless in diff mode |
-| `[c` | Previous Git hunk, unless in diff mode |
-| `<leader>hp` | Preview a hunk |
-| `<leader>hs` | Stage a hunk |
-| `<leader>hr` | Reset a hunk |
-| `<leader>hb` | Blame the current line |
+| `]c / [c` | Next / previous hunk |
+| `<leader>hp hs hr hb` | Preview, stage, reset a hunk; blame the line |
+| `<leader>gf` | Git files |
+| `<leader>gs` | Git status |
+| `<leader>gc / gC` | Commits / commits for this file |
+| `<leader>gb` | Branches |
 
-### Buffers
+### LSP, diagnostics and lists
 
 | Key | Action |
 | --- | --- |
-| `<leader>bn` | Next buffer |
-| `<leader>bp` | Previous buffer |
-| `<leader>bc` | Close the current buffer |
-| `<leader>bo` | Close all buffers except the current one |
-| `<leader>br` | Restore a closed buffer |
-| `<leader>bt` | Pick a buffer |
+| `gd / gD / gy` | Go to definition / declaration / type |
+| `Ctrl+click` | Go to definition |
+| `<leader>lr` | Rename |
+| `<leader>la` | Code action |
+| `<leader>lf` | Format |
+| `<leader>ls` | Signature help |
+| `<leader>lR / li` | References / implementations |
+| `<leader>lc / lC` | Incoming / outgoing calls |
+| `<leader>lh` | Toggle inlay hints |
+| `<leader>e` | Diagnostic float |
+| `<leader>dl / dq` | Diagnostics in the buffer / project (list) |
+| `<leader>dt` | Toggle diagnostics |
+| `<leader>co / cc` | Open / close the quickfix window |
+| `<leader>xx / xX` | Trouble: project / buffer diagnostics |
+| `<leader>xs` | Trouble: symbols |
+| `<leader>xr` | Trouble: LSP references |
+| `<leader>xl / xq` | Trouble: location / quickfix list |
 
-### Terminal and sessions
+### Terminal, sessions and Neovide
 
-| Key / command | Action |
+| Key | Action |
 | --- | --- |
 | `<leader>t` | Toggle the Snacks terminal |
-| `:SessionSave` | Save a Neovim session |
-| Dashboard `s` | Restore the saved session when one exists |
+| `<Esc><Esc>` | Leave terminal mode |
+| `:SessionSave` | Save a session (dashboard s restores it) |
+| `<C-=> / <C--> / <C-0>` | Neovide: zoom in / out / reset |
+| `<F11>` | Neovide: fullscreen |
+| `<C-S-v>` | Neovide: paste the system clipboard (insert, command line, terminal) |
+
+### Completion
+
+| Key | Action |
+| --- | --- |
+| `<Tab>` / `<S-Tab>` | Next / previous item, or jump through snippet fields |
+| `<CR>` | Accept the selected item |
+| `<C-n>` / `<C-p>` | Next / previous item |
+| `<C-Space>` | Open the menu or documentation |
+| `<C-e>` | Close the menu |
+| `<C-b>` / `<C-f>` | Scroll the documentation |
+| `<C-k>` | Toggle signature help |
+
+## Neovide
+
+When started from Neovide, the config sets a Nerd Font (`JetBrainsMono Nerd Font Mono`, size 14), short scroll and cursor animations, window padding, a remembered window size, zoom (`<C-=>`, `<C-->`, `<C-0>`), fullscreen (`<F11>`), and `<C-S-v>` paste. These settings live in `options.lua` and `keymaps.lua` behind `vim.g.neovide`, so a terminal Neovim is unaffected.
 
 ## Language Servers, Formatting, and Linting
 
@@ -255,7 +313,7 @@ Language servers are configured in `languages.lua`. The setup includes:
 - **Arduino:** Arduino-Nvim setup on the `arduino` filetype.
 - **ESP32:** the ESP-IDF integration loads when `IDF_PATH` is set.
 
-Mason is configured with servers including BasedPyright, LuaLS, Lemminx, GLSL Analyzer, JDTLS, JSON-LSP, and CSS-LS. `clangd` is enabled separately. Actual server startup still depends on successful installation and each language's project setup.
+Mason (on desktop) is configured with servers including BasedPyright, LuaLS, Lemminx, GLSL Analyzer, JDTLS, JSON-LSP, and CSS-LS. `clangd` is enabled separately. Actual server startup still depends on successful installation and each language's project setup.
 
 ### Formatting
 
@@ -284,7 +342,7 @@ The executable for the selected formatter must be available. For example, Pretti
 
 Install these tools and ensure Neovim can find them in `PATH`. Clippy is a Rust component and works in the context of Cargo projects; it is not a general standalone `.rs` linter. LSP diagnostics and external linters can be active at the same time and provide different kinds of feedback.
 
-For C/C++ projects, `compile_commands.json` helps clangd understand include paths and compiler flags. CMake Tools is configured to generate it. A project can also generate it from its root with:
+For C/C++ projects, `compile_commands.json` helps clangd understand include paths and compiler flags. A project can generate it from its root with:
 
 ```bash
 cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
